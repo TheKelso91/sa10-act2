@@ -1,47 +1,54 @@
-class GildedRose
-  attr_reader :name, :days_remaining, :quality
+module GildedRose
+  class Item
+    attr_reader :quality, :days_remaining
 
-  def initialize(name:, days_remaining:, quality:)
-    @name = name
-    @days_remaining = days_remaining
-    @quality = quality
-  end
+    def initialize(quality, days_remaining)
+      @quality, @days_remaining = quality, days_remaining
+    end
 
-  def tick
-    case name
-    when "normal"
-      return normal_item_tick
-    when "Aged Brie"
-      return brie_tick
-    when 'Sulfuras, Hand of Ragnaros'
-        return sulfuras_tick
-    when "Backstage passes to a TAFKAL80ETC concert"
-      return backstage_tick
+    def tick
     end
   end
 
-  def normal_item_tick
-   @item = Normal.new(@quality, @days_remaining)
-    @item.tick
+  class Normal < Item
+    def tick
+      @days_remaining -= 1
+      return if @quality == 0
+
+      @quality -= 1
+      @quality -= 1 if @days_remaining <= 0
+    end
   end
 
-  def brie_tick
-    @days_remaining -= 1
-    return if @quality >= 50
-    @quality += 1
-    @quality += 1 if @days_remaining <= 0 && @quality < 50
+  class Brie < Item
+    def tick
+      @days_remaining -= 1
+      return if @quality >= 50
+
+      @quality += 1
+      @quality += 1 if @days_remaining <= 0
+    end
   end
 
-  def sulfuras_tick
+  class Backstage < Item
+    def tick
+      @days_remaining -= 1
+      return              if @quality >= 50
+      return @quality = 0 if @days_remaining <= 0
 
+      @quality += 1
+      @quality += 1 if @days_remaining < 10
+      @quality += 1 if @days_remaining < 5
+    end
   end
 
-  def backstage_tick
-    @days_remaining -= 1
-    return if @quality >= 50
-    return @quality = 0 if @days_remaining <= 0
-    @quality += 1
-    @quality += 1 if @days_remaining <= 10
-    @quality += 1 if @days_remaining <= 5
+  DEFAULT_CLASS = Item
+  SPECIALIZED_CLASSES = {
+    'normal' => Normal,
+    'Aged Brie' => Brie,
+    'Backstage passes to a TAFKAL80ETC concert' => Backstage }
+  
+  def self.for(name, quality, days_remaining)
+    (SPECIALIZED_CLASSES[name] || DEFAULT_CLASS).new(quality, days_remaining)
   end
 end
